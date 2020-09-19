@@ -1,4 +1,4 @@
-package rhs.assignment
+package io.github.shekhei
 
 import org.jetbrains.kotlin.com.intellij.openapi.extensions.ExtensionPoint
 import org.jetbrains.kotlin.com.intellij.openapi.extensions.Extensions

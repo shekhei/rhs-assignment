@@ -1,4 +1,4 @@
-package rhs.assignment
+package io.github.shekhei
 
 import com.google.auto.service.AutoService
 import org.jetbrains.kotlin.analyzer.AnalysisResult
@@ -47,7 +47,7 @@ fun createKotlinFile(project: Project, text: String) = PsiFileFactory.getInstanc
         .createFileFromText(KotlinLanguage.INSTANCE, text)
 
 fun createAssignmentOp(project: Project) = createKotlinFile(project, "val a = 10").let {
-    it.firstChild.nextLeaf{it.text == "="}!!
+    it.firstChild.nextLeaf { it.text == "=" }!!
 }
 
 fun processChildren(el: PsiElement, file: PsiFile) {
@@ -55,26 +55,37 @@ fun processChildren(el: PsiElement, file: PsiFile) {
     // ever block can only have one of such operator
     val children = el.children
     if (children.isEmpty()) return
-    for (i in 0 until children.size - 1) {
+    for (i in 0 until children.size) {
         val first = children[i]
-        val next = children[i + 1]
-        if (first.text == "|" && next.text == ">") {
+        var str = ""
+        var node = first
+        var offset = 0
+        while ( offset < 3 && "=>>".startsWith(str) && node != null) {
+            if ( str == "=>>") {
+                // matched!
+                break
+            }
+            str += node.text
+            node = node.nextSibling
+            offset++
+        }
+        if ( str == "=>>" ) {
+            val next = children[i + offset]
             // keep finding one parent with previous sibling
             val prev = findPreviousSibling(first)
-            if ( prev == null ) {
+            if (prev == null) {
                 throw IllegalStateException("syntax error, |> must be not be first expression")
             }
             // lets swap them
-            if ( next === next.parent.lastChild) {
+            if (next === next.parent.lastChild) {
                 throw IllegalStateException("syntax error, |> must be followed by property statement")
             }
             var nextEl = next.nextSibling
             // if this is the last element, this should fail straight away
             while (nextEl != null) {
                 val sibling = nextEl.nextSibling
-//                nextEl.delete()
                 prev.parent.addBefore(nextEl, prev)
-                if ( nextEl == next.parent.lastChild ) {
+                if (nextEl == next.parent.lastChild) {
                     break
                 }
                 nextEl = sibling
@@ -90,7 +101,6 @@ fun processChildren(el: PsiElement, file: PsiFile) {
         }
         processChildren(first, file)
     }
-    processChildren(children.last(), file)
 }
 
 fun processFile(file: PsiFile) {
@@ -113,7 +123,7 @@ class RhsAssignmentPreprocess : PreprocessedVirtualFileFactoryExtension {
 }
 
 class RhsAssignmentExtension() : AnalysisHandlerExtension {
-    private var ran =true
+    private var ran = false
     // returns true if immediate children has operator
 
 
@@ -129,10 +139,12 @@ class RhsAssignmentExtension() : AnalysisHandlerExtension {
 //            true -> null
 //            false -> AnalysisResult.EMPTY
 //        }
-        if (ran) return AnalysisResult.success(bindingTrace.bindingContext, module, shouldGenerateCode = true)
+        // returning null at the end allows the lazy analysis to happen, which generates all the class descriptors and everything else
+        // unless we want to handle it ourselves
+        if (ran) return null //AnalysisResult.success(bindingTrace.bindingContext, module, shouldGenerateCode = false)
         ran = true
         val psiFileFactory = PsiFileFactory.getInstance(project)
-        val newFiles= files.map {
+        val newFiles = files.map {
             if (it.language is KotlinLanguage) {
 //                it.navigationElement.accept(OurVisitor())
 //                val file = psiFileFactory.createFileFromText(

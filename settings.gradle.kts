@@ -9,30 +9,50 @@
 
 rootProject.name = "rhs-assignment"
 pluginManagement {
+    buildscript {
+        repositories {
+            mavenLocal()
+            mavenCentral()
+            jcenter()
+            google()
+            gradlePluginPortal()
+            maven {
+                url = uri("https://dl.bintray.com/jetbrains/intellij-plugin-service/")
+            }
+        }
+        dependencies {
+            classpath("com.sun.istack:istack-commons-runtime:3.0.10")
+        }
+    }
     plugins {
         `java-library`
         application
         id("com.github.johnrengelman.shadow") version "6.0.0"
+        id("org.jetbrains.intellij") version "0.4.24"
 
     }
+
     repositories {
+        mavenLocal()
         mavenCentral()
         jcenter()
+        google()
         gradlePluginPortal()
         maven {
-            url = uri("https://plugins.gradle.org/m2/")
+            url = uri("https://dl.bintray.com/jetbrains/intellij-plugin-service/")
         }
-//        maven {
-//            url = uri("http://artifactory.paypalcorp.com/artifactory/public")
-//        }
-//        maven {
-//            url = uri("http://artifactory.paypalcorp.com/artifactory/central")
-//        }
-//        maven {
-//            url = uri("http://artifactory.paypalcorp.com/artifactory/maven-public")
-//        }
-//        maven {
-//            url = uri("https://artifactory.paypalcorp.com/artifactory/gradle-plugins/m2")
-//        }
+    }
+}
+include(":kotlin-plugin")
+include(":ide-plugin")
+//include(":gradle-plugin")
+include(":sample")
+project(":kotlin-plugin").name = "rhs-assignment-compiler-plugin"
+//project(":ide-plugin").name = "rhs-assignment-ide-plugin"
+val mainProj = this
+includeBuild("gradle-plugin") {
+    dependencySubstitution {
+        substitute(module("io.github.shekhei:rhs-assignment-gradle-plugin"))
+                .with(project(":"))
     }
 }

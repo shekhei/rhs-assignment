@@ -1,4 +1,4 @@
-package rhs.assignment
+package io.github.shekhei
 
 //
 //open class MetaPlugin : Meta {

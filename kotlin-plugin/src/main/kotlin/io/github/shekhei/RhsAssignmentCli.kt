@@ -1,4 +1,4 @@
-package rhs.assignment
+package io.github.shekhei
 
 
 import com.google.auto.service.AutoService
@@ -23,7 +23,7 @@ object ImportsDumperConfigurationKeys {
 }
 
 @AutoService(CommandLineProcessor::class)
-class ImportsDumperCommandLineProcessor : CommandLineProcessor {
+class RhsAssignmentCli: CommandLineProcessor {
     override val pluginId: String = PLUGIN_ID
 
 //    override val pluginOptions: Collection<AbstractCliOption> = listOf(ImportsDumperCliOptions.DESTINATION)
