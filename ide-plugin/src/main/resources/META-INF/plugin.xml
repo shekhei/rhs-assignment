@@ -1,5 +1,16 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" version="2" url="http://kotlinlang.org"
+             allow-bundled-update="true">
+    <id>io.github.shekhei.rhsassignment</id>
+    <depends>org.jetbrains.kotlin</depends>
+    <depends>com.intellij.gradle</depends>
+
+    <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+        <projectResolve implementation="io.github.shekhei.RhsAssignmentResolverExtension" order="last"/>
+    </extensions>
     <extensions defaultExtensionNs="org.jetbrains.kotlin">
         <gradleProjectImportHandler implementation="io.github.shekhei.RhsAssignmentGradleProjectImportHandler"/>
+        <analyzeCompleteHandlerExtension implementation="io.github.shekhei.RhsAssignmentExtension"/>
+        <projectConfigurator implementation="io.github.shekhei.RhsKotlinProjectConfigurator"/>
     </extensions>
+    <name>waht..</name>
 </idea-plugin>

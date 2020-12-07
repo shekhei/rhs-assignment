@@ -118,7 +118,7 @@ class LibraryTest {
         workingDir = tempDir
         compilerPlugins = listOf(RegisterIndentHelper, RhsAssignmentRegistrar())
 //        compilerPlugins = listOf(RegisterIndentHelper)
-        commandLineProcessors = listOf(ImportsDumperCommandLineProcessor())
+        commandLineProcessors = listOf(RhsAssignmentCli())
         messageOutputStream = System.out
         inheritClassPath = true
         sources = sourceFiles.asList()

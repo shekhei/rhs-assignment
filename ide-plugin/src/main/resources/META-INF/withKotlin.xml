@@ -1,0 +1,8 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="org.jetbrains.kotlin">
+        <analyzeCompleteHandlerExtension implementation="io.github.shekhei.RhsAssignmentExtension2"/>
+<!--        <quickFixContributor implementation="io.github.shekhei.QuickfixRegistrar"/>-->
+<!--        <diagnosticSuppressor implementation="io.github.shekhei.RhsDiagnosticSuppressor"/>-->
+        <projectConfigurator implementation="io.github.shekhei.RhsKotlinProjectConfigurator"/>
+    </extensions>
+</idea-plugin>

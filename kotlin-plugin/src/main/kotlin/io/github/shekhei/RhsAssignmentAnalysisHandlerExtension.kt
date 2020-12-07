@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.com.intellij.psi.impl.source.codeStyle.IndentHelper
 import org.jetbrains.kotlin.com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.kotlin.compiler.plugin.CommandLineProcessor
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.container.ComponentProvider
 import org.jetbrains.kotlin.context.ProjectContext
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
@@ -29,8 +30,11 @@ import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespace
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.nextLeaf
 import org.jetbrains.kotlin.resolve.BindingTrace
+import org.jetbrains.kotlin.resolve.BindingTraceContext
+import org.jetbrains.kotlin.resolve.CodeAnalyzerInitializer
 import org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade
 import org.jetbrains.kotlin.resolve.jvm.extensions.AnalysisHandlerExtension
+import org.jetbrains.kotlin.resolve.lazy.KotlinCodeAnalyzer
 import java.io.File
 
 fun findPreviousSibling(el: PsiElement): PsiElement? {
@@ -43,15 +47,18 @@ fun findPreviousSibling(el: PsiElement): PsiElement? {
     return null
 }
 
-fun createKotlinFile(project: Project, text: String) = PsiFileFactory.getInstance(project)
-        .createFileFromText(KotlinLanguage.INSTANCE, text)
+typealias KtFileCreator = (text: String) -> PsiElement
 
-fun createAssignmentOp(project: Project) = createKotlinFile(project, "val a = 10").let {
+fun createKotlinFile(project: Project): KtFileCreator = { text: String ->
+    PsiFileFactory.getInstance(project)
+            .createFileFromText(KotlinLanguage.INSTANCE, text)
+}
+
+fun createAssignmentOp(ktFileCreator: KtFileCreator) = ktFileCreator("val a = 10").let {
     it.firstChild.nextLeaf { it.text == "=" }!!
 }
 
-fun processChildren(el: PsiElement, file: PsiFile) {
-    val found = mutableListOf<PsiElement>()
+fun processChildren(el: PsiElement, ktFileCreator: KtFileCreator) {
     // ever block can only have one of such operator
     val children = el.children
     if (children.isEmpty()) return
@@ -60,8 +67,8 @@ fun processChildren(el: PsiElement, file: PsiFile) {
         var str = ""
         var node = first
         var offset = 0
-        while ( offset < 3 && "=>>".startsWith(str) && node != null) {
-            if ( str == "=>>") {
+        while (offset < 3 && "=>>".startsWith(str) && node != null) {
+            if (str == "=>>") {
                 // matched!
                 break
             }
@@ -69,7 +76,7 @@ fun processChildren(el: PsiElement, file: PsiFile) {
             node = node.nextSibling
             offset++
         }
-        if ( str == "=>>" ) {
+        if (str == "=>>") {
             val next = children[i + offset]
             // keep finding one parent with previous sibling
             val prev = findPreviousSibling(first)
@@ -90,21 +97,15 @@ fun processChildren(el: PsiElement, file: PsiFile) {
                 }
                 nextEl = sibling
             }
-            prev.parent.addBefore(createAssignmentOp(file.manager.project), prev)
+            prev.parent.addBefore(createAssignmentOp(ktFileCreator), prev)
             first.parent.deleteChildRange(first, first.parent.lastChild)
-//            var el = first
-//            while (el != null) {
-//                val next = el.getNextSiblingIgnoringWhitespace()
-//                el.delete()
-//                el = next
-//            }
         }
-        processChildren(first, file)
+        processChildren(first, ktFileCreator)
     }
 }
 
 fun processFile(file: PsiFile) {
-    processChildren(file, file)
+    processChildren(file, createKotlinFile(file.manager.project))
 }
 
 class OurVisitor : PsiElementVisitor() {
@@ -124,15 +125,21 @@ class RhsAssignmentPreprocess : PreprocessedVirtualFileFactoryExtension {
 
 class RhsAssignmentExtension() : AnalysisHandlerExtension {
     private var ran = false
+
     // returns true if immediate children has operator
 
+    init {
+        println("ERM what")
+    }
 
     override fun analysisCompleted(project: Project, module: ModuleDescriptor, bindingTrace: BindingTrace, files: Collection<KtFile>): AnalysisResult? {
+        println("ERM")
         if (ran) return null
         return super.analysisCompleted(project, module, bindingTrace, files)
     }
 
     override fun doAnalysis(project: Project, module: ModuleDescriptor, projectContext: ProjectContext, files: Collection<KtFile>, bindingTrace: BindingTrace, componentProvider: ComponentProvider): AnalysisResult? {
+        println("ERM what2")
 //        val psiFileFactory = KtPsiFactory(project, false)
 
 //        return when (ran) {
@@ -145,7 +152,7 @@ class RhsAssignmentExtension() : AnalysisHandlerExtension {
         ran = true
         val psiFileFactory = PsiFileFactory.getInstance(project)
         val newFiles = files.map {
-            if (it.language is KotlinLanguage) {
+            if (it.fileType is KotlinFileType && !it.isScript()) {
 //                it.navigationElement.accept(OurVisitor())
 //                val file = psiFileFactory.createFileFromText(
 //                        it.virtualFilePath,
@@ -193,3 +200,4 @@ class RhsAssignmentExtension() : AnalysisHandlerExtension {
         )
     }
 }
+

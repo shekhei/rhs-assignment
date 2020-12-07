@@ -37,6 +37,6 @@ class RhsAssignmentCli: CommandLineProcessor {
     }
 
     companion object {
-        const val PLUGIN_ID = "rhs.assignment.rhsAssignment"
+        const val PLUGIN_ID = "io.github.shekhei.rhs-assignment-gradle-plugin"
     }
 }

@@ -40,6 +40,7 @@ allprojects {
 subprojects {
     if ( this.name != "sample") {
         apply(plugin = "maven")
+        apply(plugin = "java")
     }
     configurations.all {
         resolutionStrategy {
@@ -53,4 +54,12 @@ subprojects {
             }
         }
     }
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+        kotlinOptions.jvmTarget = "1.8"
+        kotlinOptions.freeCompilerArgs += listOf("-Xjvm-default=enable")
+    }
+//    val subproj = this
+//    tasks.withType<Jar> {
+//        archiveFileName.set("${subproj.name}.jar")
+//    }
 }
